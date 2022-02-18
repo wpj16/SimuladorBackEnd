@@ -3,28 +3,41 @@
 namespace App\Providers;
 
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
-use Illuminate\Support\Facades\Gate;
+use App\Auth\Passport\Passport;
 
 class AuthServiceProvider extends ServiceProvider
 {
-    /**
-     * The policy mappings for the application.
-     *
-     * @var array<class-string, class-string>
-     */
+
     protected $policies = [
         // 'App\Models\Model' => 'App\Policies\ModelPolicy',
     ];
 
-    /**
-     * Register any authentication / authorization services.
-     *
-     * @return void
-     */
+    public function register()
+    {
+        Passport::ignoreMigrations();
+        $this->registerPolicies();
+    }
+
     public function boot()
     {
-        $this->registerPolicies();
-
+        $scopes = [
+            'admin' => 'Administrativo do sistema',
+        ];
+        // rota de autenticação default do site
+        Passport::routes(
+            function ($routes) {
+                $routes->setMiddlewareRoutesAll(['passport']);
+                $routes->forAuthorization();
+                $routes->forAccessTokens();
+                $routes->forTransientTokens();
+                $routes->forClients();
+                $routes->forPersonalAccessTokens();
+            },
+            [
+                'prefix' => '/oauth/',
+            ]
+        );
         //
+        Passport::tokensCan(array_merge($scopes));
     }
 }

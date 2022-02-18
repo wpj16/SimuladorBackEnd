@@ -2,40 +2,55 @@
 
 namespace App\Exceptions;
 
-use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Throwable;
+use App\Support\Facades\HttpResponse;
+use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 
 class Handler extends ExceptionHandler
 {
-    /**
-     * A list of the exception types that are not reported.
-     *
-     * @var array<int, class-string<Throwable>>
-     */
+    const PATH_EXCEPTIONS = "App\\Exceptions\\Exceptions\\";
+
     protected $dontReport = [
-        //
+        \App\Support\Facades\HttpResponse::class,
+        \App\Support\HttpResponse\HttpResponse::class,
+        \League\OAuth2\Server\Exception\OAuthServerException::class
     ];
 
-    /**
-     * A list of the inputs that are never flashed for validation exceptions.
-     *
-     * @var array<int, string>
-     */
     protected $dontFlash = [
         'current_password',
         'password',
         'password_confirmation',
     ];
 
-    /**
-     * Register the exception handling callbacks for the application.
-     *
-     * @return void
-     */
     public function register()
     {
-        $this->reportable(function (Throwable $e) {
-            //
+        $this->renderable(function (Throwable $exception, $request) {
+            $class = (self::PATH_EXCEPTIONS . pathinfo(get_class($exception), PATHINFO_FILENAME));
+            if (class_exists($class)) {
+                return $class::handler($exception, $request);
+            }
+            $responsejson = $request->wantsJson();
+            $responsejson = $responsejson ?: $request->ajax();
+            $message = 'Falha ao executar operação, entre em contato com o setor de TI!';
+            $messageException = $exception->getMessage();
+            if ($responsejson) {
+                $data = [
+                    'falha' => $exception->getMessage(),
+                    'arquivo' => $exception->getFile(),
+                    'linha' => $exception->getLine()
+                ];
+                return HttpResponse::json($data)
+                    ->code(404)
+                    ->message([$message, $messageException])
+                    ->httpMessage($message)
+                    ->send();
+            }
+            dd('erro', $exception);
+            return HttpResponse::return()
+                ->code(303)
+                ->message([$message, $messageException], true)
+                ->httpMessage($message, true)
+                ->send();
         });
     }
 }
