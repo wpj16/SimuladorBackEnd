@@ -11,9 +11,9 @@ class UsuarioController extends Controller
 {
     private $usuarioBusinessRule;
 
-    public function __construct()
+    public function __construct(UsuarioBusinessRule $usuarioBusinessRule)
     {
-        $this->usuarioBusinessRule = new UsuarioBusinessRule();
+        $this->usuarioBusinessRule = $usuarioBusinessRule;
     }
 
     public function login(Request $request, AuthorizationServer $server)

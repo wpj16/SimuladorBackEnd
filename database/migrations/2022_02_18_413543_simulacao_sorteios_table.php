@@ -49,7 +49,7 @@ class SimulacaoSorteiosTable extends Migration
                 $table->integer('gols_time_b')->default(0)
                     ->comment('Total de gols feito pelo time B.');
                 $table->column('public.dm_campeonato_etapas', 'etapa')->nullable()
-                    ->comment('0 = Não definido, 1 = Final, 2 = Semifinal, 3 = Quartas de final.');
+                    ->comment('0 = Jogo terceiro lugar, 1 = Final, 2 = Semifinal, 3 = Quartas de final.');
                 $table->timestampsnullable(0, false);
             });
 

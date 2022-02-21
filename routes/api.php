@@ -12,6 +12,6 @@ Route::post('/login/', [LoginController::class, 'login'])->name('tradetechnology
 //
 Route::middleware(['api_client'])->group(function () {
     //
-    Route::post('/teste/', [SorteioController::class, 'teste'])->name('tradetechnology.teste');
+    Route::post('/simular/campeonato/', [SorteioController::class, 'simularCampeonato'])->name('tradetechnology.teste');
     //
 });

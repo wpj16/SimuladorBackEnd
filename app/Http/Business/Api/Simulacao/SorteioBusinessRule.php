@@ -19,6 +19,7 @@ class SorteioBusinessRule extends MainBusinessRule
     const JOGO_FINAIS = 1;
     const JOGO_SEMI_FINAIS = 2;
     const JOGO_QUARTAS_DE_FINAIS = 3;
+    const JOGO_TERCEIRO_LUGAR = 0;
 
     private $modelSorteio;
     private $modelCampeonato;
@@ -30,8 +31,64 @@ class SorteioBusinessRule extends MainBusinessRule
         $this->modelCampeonatoTime = new CampeonatoTime();
     }
 
+    public function validarCampeonatoSimulado(int $idCampeonato): ResponseBusinessRule
+    {
+        $quartasDeFinais = $this->modelSorteio->where([
+            ['id_campeonato', $idCampeonato],
+            ['etapa', self::JOGO_QUARTAS_DE_FINAIS]
+        ])->count();
+        $semiFinais = $this->modelSorteio->where([
+            ['id_campeonato', $idCampeonato],
+            ['etapa', self::JOGO_SEMI_FINAIS]
+        ])->count();
+        $finais = $this->modelSorteio->where([
+            ['id_campeonato', $idCampeonato],
+            ['etapa', self::JOGO_FINAIS]
+        ])->count();
+        $terceiroLugar = $this->modelSorteio->where([
+            ['id_campeonato', $idCampeonato],
+            ['etapa', self::JOGO_TERCEIRO_LUGAR]
+        ])->count();
 
-    public function simular(int $idCampeonato, int $etapa)
+        if (($quartasDeFinais == 4) && ($semiFinais == 2) && ($finais == 1) && ($terceiroLugar == 1)) {
+            return parent::response()
+                ->setError(false)
+                ->setMessageSuccess('Este campeonato ja foi finalizado!');
+        }
+        return parent::response()
+            ->setError(true)
+            ->setMessageError('Campeonato não simulado!');
+    }
+
+    public function validarCampeonato(int $idCampeonato): ResponseBusinessRule
+    {
+        $campeonato = $this->modelCampeonato
+            ->with('times')
+            ->where('id', $idCampeonato)
+            ->first()
+            ->toArray();
+
+        if (empty($campeonato)) {
+            return parent::response()
+                ->setError(true)
+                ->setMessageError('Campenato com não encontrado ou cadastrado no sistema!');
+        }
+        if (count($campeonato['times']) < 8) {
+            return parent::response()
+                ->setError(true)
+                ->setMessageError('Campenato com menos de 8 times cadastrados, obrigatório 8 times para simular um campeonato!');
+        }
+        if (count($campeonato['times']) > 8) {
+            return parent::response()
+                ->setError(true)
+                ->setMessageError('Campenato com mais de 8 times cadastrados, obrigatório 8 times para simular um campeonato!');
+        }
+        return parent::response()
+            ->setError(false)
+            ->setMessageError('Campeonato pronto para ser simulado!');
+    }
+
+    public function simular(int $idCampeonato, int $etapa): ResponseBusinessRule
     {
         $jogos = $this->listarJogosCadastrados($idCampeonato, $etapa);
         $jogos->error(function () use ($idCampeonato, $etapa) {
@@ -70,6 +127,7 @@ class SorteioBusinessRule extends MainBusinessRule
 
             $jogos = $response->getData();
             if ($etapa <= self::JOGO_FINAIS) {
+                $this->simularTerceiroLugar($idCampeonato, self::JOGO_SEMI_FINAIS);
                 return parent::response()
                     ->setData($jogos)
                     ->setMessageSuccess('Partidas simuladas com sucesso!')
@@ -107,6 +165,8 @@ class SorteioBusinessRule extends MainBusinessRule
                     return $this->simular($campeonato['id'], $etapa);
                 });
         });
+
+        return $jogos;
     }
 
 
@@ -175,8 +235,43 @@ class SorteioBusinessRule extends MainBusinessRule
             ->setMessageError('Nenhuma partida encontrada!');
     }
 
+    private function simularTerceiroLugar(int $idCampeonato, int $etapa): ResponseBusinessRule
+    {
+        $jogos = $this->listarJogosCadastrados($idCampeonato, $etapa);
+        $jogos->success(function ($response) use ($idCampeonato) {
+            $jogos = $response->getData();
+            $campeonato = $this->modelCampeonato
+                ->with(['times' => function ($query) use ($jogos) {
+                    $perdedores = array_column($jogos, 'time_perdedor');
+                    return $query->whereIn("times.id", $perdedores);
+                }])
+                ->where('id', $idCampeonato)
+                ->first()
+                ->toArray();
 
-    public function sorteio(array $times = []): ResponseBusinessRule
+            return $this->sorteio($campeonato['times'])
+                ->success(function ($response) use ($campeonato) {
+                    $sorteio = $response->getData();
+                    foreach ($sorteio as $jogo) {
+                        $this->resultado($jogo)
+                            ->success(function ($response) use ($campeonato) {
+                                $jogo = $response->getData();
+                                $this->modelSorteio->insertGetId([
+                                    'id_campeonato' => $campeonato['id'],
+                                    'id_time_a' =>  $jogo[0]['id'],
+                                    'id_time_b' =>  $jogo[1]['id'],
+                                    'gols_time_a' =>  $jogo[0]['gols'],
+                                    'gols_time_b' =>  $jogo[1]['gols'],
+                                    'etapa' => self::JOGO_TERCEIRO_LUGAR
+                                ]);
+                            });
+                    }
+                });
+        });
+        return $jogos;
+    }
+
+    private function sorteio(array $times = []): ResponseBusinessRule
     {
         if ((count($times) % 2) > 0) {
             return parent::response()
@@ -207,7 +302,7 @@ class SorteioBusinessRule extends MainBusinessRule
             ->setMessageError('Falha ao simular partidas!');
     }
 
-    public function resultado(array $partidas = []): ResponseBusinessRule
+    private function resultado(array $partidas = []): ResponseBusinessRule
     {
 
         $partidas[0]['gols'] = rand(1, 9);

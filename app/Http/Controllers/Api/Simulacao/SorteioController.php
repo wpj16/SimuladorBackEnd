@@ -10,13 +10,77 @@ class SorteioController extends Controller
 {
     private $sorteioBusinessRule;
 
-    public function __construct()
+    public function __construct(SorteioBusinessRule $sorteioBusinessRule)
     {
-        $this->sorteioBusinessRule = new SorteioBusinessRule();
+        $this->sorteioBusinessRule = $sorteioBusinessRule;
     }
 
-    public function teste()
+    public function simularCampeonato(Request $request)
     {
-        return $this->sorteioBusinessRule->simular(1, 3);
+        parent::validate($request)
+            ->rules([
+                'campeonato' => 'required|numeric',
+            ])
+            ->success(function ($data) {
+                //valida campeonato
+                $this->sorteioBusinessRule
+                    ->validarCampeonato($data['campeonato'])
+                    ->error(function ($response) {
+                        return parent::responseJson()
+                            ->code(404)
+                            ->message($response->getMessage())
+                            ->send();
+                    });
+
+                //valida campeonato ja simulado
+                $this->sorteioBusinessRule
+                    ->validarCampeonatoSimulado($data['campeonato'])
+                    ->success(function ($response) use ($data) {
+                        //retorna jogos ja simulados
+                        return $response
+                            ->listarJogosCadastrados($data['campeonato'])
+                            ->success(function ($responseJogos) use ($response) {
+                                $data = $responseJogos->getData();
+                                return parent::responseJson($data)
+                                    ->code(207)
+                                    ->message([$response->getMessage()])
+                                    ->send();
+                            })
+                            ->error(function ($response) {
+                                return parent::responseJson()
+                                    ->code(404)
+                                    ->message($response->getMessage())
+                                    ->send();
+                            });
+                    })->error(function () use ($data) {
+                        //faz simulacao
+                        $simulacao = $this->sorteioBusinessRule->simular($data['campeonato'], 3);
+                        $simulacao->success(function ($response) use ($data) {
+                            //retorna jogos simulados
+                            return $response
+                                ->listarJogosCadastrados($data['campeonato'])
+                                ->success(function ($response) {
+                                    $data = $response->getData();
+                                    return parent::responseJson($data)
+                                        ->code(200)
+                                        ->message($response->getMessage())
+                                        ->send();
+                                })
+                                ->error(function ($response) {
+                                    return parent::responseJson()
+                                        ->code(404)
+                                        ->message($response->getMessage())
+                                        ->send();
+                                });
+                        });
+                    });
+            })
+            ->error(function ($errors) {
+                return parent::responseJson()
+                    ->code(401)
+                    ->message($errors)
+                    ->send();
+            })
+            ->validate();
     }
 }
