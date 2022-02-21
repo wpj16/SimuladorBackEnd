@@ -44,6 +44,12 @@ class Kernel extends HttpKernel
             'throttle:api',
             \Illuminate\Routing\Middleware\SubstituteBindings::class,
         ],
+
+        'api_client' => [
+            \Illuminate\Routing\Middleware\SubstituteBindings::class,               #bindins de parametros de entrada
+            \App\Http\Middleware\DatabaseTransaction::class,                        #Transação de sessão no banco de dados
+            \App\Http\Middleware\ApiAuthPassportCheckCredentials::class,            #Autentica usuário pelo bearer token e abre sessão no banco
+        ]
     ];
 
     /**

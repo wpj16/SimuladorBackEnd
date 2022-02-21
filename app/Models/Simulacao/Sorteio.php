@@ -1,12 +1,12 @@
 <?php
 
-namespace App\Models\Pessoa;
+namespace App\Models\Simulacao;
 
 use App\Models\Model;
 use App\Models\Time\Time;
 use App\Models\Campeonato\Campeonato;
 
-class Sorteios extends Model
+class Sorteio extends Model
 {
     protected $table = 'simulacao.sorteios';
 

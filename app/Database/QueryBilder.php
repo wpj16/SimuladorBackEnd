@@ -12,14 +12,13 @@ use Illuminate\Database\Query\Builder as QueryBilderBase;
 
 class QueryBilder extends Builder
 {
-    const ORDEM = 'ordem';
-    const FILTRO = 'filtro';
-    const PAGINA = 'pagina';
-    const LIMITE = 'limite';
+    const ORDEM = 'Paginate-Order';
+    const FILTRO = 'Paginate-Search';
+    const PAGINA = 'Paginate-Page';
+    const LIMITE = 'Paginate-Limit';
 
     private $before = [];
     private $paginate = [];
-
 
     public function __construct(QueryBilderBase $query)
     {
@@ -44,34 +43,34 @@ class QueryBilder extends Builder
 
     private function defaultPaginate()
     {
-        $request =  app('Illuminate\Http\Request');
-        $parameters = $request->all();
-        $request->merge([
-            self::FILTRO => $parameters[self::FILTRO] ?? null,
-            self::PAGINA => $parameters[self::PAGINA] ?? 1,
-            self::LIMITE => $parameters[self::LIMITE] ?? 20,
-            self::ORDEM => $parameters[self::ORDEM] ?? [],
-        ]);
-        Validator::request($request)
-            ->rules([
-                self::FILTRO => 'default:null',
-                self::PAGINA => 'numeric',
-                self::LIMITE => 'numeric',
-                self::ORDEM => 'array',
-            ])
-            ->error(function () {
-                $data = [
-                    self::FILTRO =>  null,
-                    self::PAGINA => 1,
-                    self::LIMITE => 20,
-                    self::ORDEM => [],
-                ];
-                $this->setPaginateParams($data);
-            })
-            ->success(function ($data) {
-                $this->setPaginateParams($data);
-            })
-            ->validate();
+        $request = app('Illuminate\Http\Request');
+        $request->headers->set(self::FILTRO, $request->headers->get(self::FILTRO, ''));
+        $request->headers->set(self::PAGINA, $request->headers->get(self::PAGINA, 1));
+        $request->headers->set(self::LIMITE, $request->headers->get(self::LIMITE, 20));
+        $request->headers->set(self::ORDEM, $request->headers->get(self::ORDEM, '{}'));
+
+        Validator::data([
+            self::FILTRO => $request->headers->get(self::FILTRO, ''),
+            self::PAGINA => $request->headers->get(self::PAGINA, 1),
+            self::LIMITE => $request->headers->get(self::LIMITE, 20),
+            self::ORDEM  => $request->headers->get(self::ORDEM, '{}'),
+        ])->rules([
+            self::FILTRO => 'default:null',
+            self::PAGINA => 'numeric',
+            self::LIMITE => 'numeric',
+            self::ORDEM  => 'json|cast:array',
+        ])->error(function () {
+            $data = [
+                self::FILTRO =>  null,
+                self::PAGINA => 1,
+                self::LIMITE => 20,
+                self::ORDEM => [],
+            ];
+            $this->setPaginateParams($data);
+        })->success(function ($data) {
+            $this->setPaginateParams($data);
+        })->validate();
+
         return $this;
     }
 

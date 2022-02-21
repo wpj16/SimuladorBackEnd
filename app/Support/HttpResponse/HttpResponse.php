@@ -189,7 +189,7 @@ class HttpResponse extends RuntimeException
             $this->response?->withHeaders($headers);
         }
         if (method_exists($this->response, 'setStatusCode')) {
-            $httpMessage = $this->toCharset($httpMessage, 'ISO-8859-1');
+            $httpMessage = $this->toCharset($httpMessage, 'UTF-8');
             $this->response?->setStatusCode($httpCode, $httpMessage);
         }
         if (method_exists($this->response, 'withInput')) {
