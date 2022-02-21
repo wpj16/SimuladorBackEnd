@@ -229,6 +229,7 @@ class SorteioBusinessRule extends MainBusinessRule
                     break;
             }
         });
+
         return parent::response()
             ->setData($dados)
             ->setMessageSuccess('Partida(s) listada(s) com sucesso!')
@@ -304,10 +305,14 @@ class SorteioBusinessRule extends MainBusinessRule
 
     private function resultado(array $partidas = []): ResponseBusinessRule
     {
-
-        $partidas[0]['gols'] = rand(1, 9);
-        $partidas[1]['gols'] = rand(1, 9);
-
+        $s = DIRECTORY_SEPARATOR;
+        $file = base_path() . $s . 'teste.py';
+        $output = shell_exec($file);
+        $data = explode("\n", trim($output));
+        $golsTimeA = array_shift($data);
+        $golsTimeB = array_shift($data);
+        $partidas[0]['gols'] = $golsTimeA;
+        $partidas[1]['gols'] = $golsTimeB;
         return parent::response()
             ->setData($partidas)
             ->setMessageSuccess('Resultado da partida simulado com sucesso!')

@@ -3,22 +3,14 @@
 namespace App\Http\Controllers\Api\Simulacao;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use League\OAuth2\Server\AuthorizationServer;
-use App\Http\Business\Api\Simulacao\SorteioBusinessRule;
+use App\Http\Business\Api\Campeonato\CampeonatoBusinessRule;
 
 class SorteioController extends Controller
 {
-    private $simulacaoBusinessRule;
+    private $campeonatoBusinessRule;
 
-    public function __construct()
+    public function __construct(CampeonatoBusinessRule $campeonatoBusinessRule)
     {
-        $this->simulacaoBusinessRule = new SorteioBusinessRule();
-    }
-
-    public function teste()
-    {
-
-        $this->simulacaoBusinessRule->teste();
+        $this->campeonatoBusinessRule = $campeonatoBusinessRule;
     }
 }
