@@ -28,6 +28,8 @@ ALTER USER tradetechnology WITH SUPERUSER;
 
         php artisan migrate
 
+        php artisan db:seed
+
         php artisan passport:client --password
 
         ##### após o comando ele irá pedir um nome para o client, pode ser qualquer um ou ( SimuladorFrontEnd )
