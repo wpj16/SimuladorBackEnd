@@ -22,7 +22,7 @@ class DatabaseSeeder extends Seeder
                 $this->call([
                     \Database\Seeders\Default\PessoaPessoasSeeder::class,
                     \Database\Seeders\Default\UsuarioUsuariosSeeder::class,
-                    //\Database\Seeders\Default\CampeonatoCampeonatoSeeder::class,
+                    \Database\Seeders\Default\CampeonatoCampeonatoSeeder::class,
                 ]);
                 DB::commit();
             } catch (Throwable $e) {

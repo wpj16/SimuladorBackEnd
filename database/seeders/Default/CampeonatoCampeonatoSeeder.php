@@ -8,6 +8,7 @@ use \App\Models\Campeonato\{
     CampeonatoTime
 };
 use \App\Models\Time\Time;
+use \App\Http\Business\Api\Simulacao\SorteioBusinessRule;
 
 class CampeonatoCampeonatoSeeder extends Seeder
 {
@@ -17,6 +18,7 @@ class CampeonatoCampeonatoSeeder extends Seeder
         $time = new Time();
         $campeonato = new Campeonato();
         $campeonatoTime = new CampeonatoTime();
+        $simulacao =  new SorteioBusinessRule();
         $idCampeonato = $campeonato->insertGetId([
             'nome' => 'Primeiro Campeonato'
         ]);
@@ -56,5 +58,7 @@ class CampeonatoCampeonatoSeeder extends Seeder
                 ]
             );
         }
+
+        $simulacao->simular($idCampeonato, 3);
     }
 }
