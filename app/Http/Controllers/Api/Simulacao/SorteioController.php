@@ -38,7 +38,7 @@ class SorteioController extends Controller
                     ->success(function ($response) use ($data) {
                         //retorna jogos ja simulados
                         return $response
-                            ->listarJogosCadastrados($data['campeonato'])
+                            ->listarSimulacoesCampeonatos($data['campeonato'])
                             ->success(function ($responseJogos) use ($response) {
                                 $data = $responseJogos->getData();
                                 return parent::responseJson($data)
@@ -58,7 +58,7 @@ class SorteioController extends Controller
                         $simulacao->success(function ($response) use ($data) {
                             //retorna jogos simulados
                             return $response
-                                ->listarJogosCadastrados($data['campeonato'])
+                                ->listarSimulacoesCampeonatos($data['campeonato'])
                                 ->success(function ($response) {
                                     $data = $response->getData();
                                     return parent::responseJson($data)
@@ -82,5 +82,24 @@ class SorteioController extends Controller
                     ->send();
             })
             ->validate();
+    }
+
+    public function listarSimulacoesCampeonatos()
+    {
+
+        $this->sorteioBusinessRule->listarSimulacoesCampeonatos()
+            ->success(function ($response) {
+                $data = $response->getData();
+                return parent::responseJson($data)
+                    ->code(200)
+                    ->message($response->getMessage())
+                    ->send();
+            })
+            ->error(function ($response) {
+                return parent::responseJson()
+                    ->code(404)
+                    ->message($response->getMessage())
+                    ->send();
+            });
     }
 }

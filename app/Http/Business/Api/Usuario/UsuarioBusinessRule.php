@@ -32,4 +32,15 @@ class UsuarioBusinessRule extends MainBusinessRule
             ->setMessageSuccess('Login efetuado com sucesso!')
             ->setMessageError('Falha ao efetuar login!');
     }
+
+    public function listarDadosUsuario(int $id): ResponseBusinessRule
+    {
+        $dados = $this->modelUsuario
+            ->with(['pessoa'])
+            ->find($id)->toArray();
+        return parent::response()
+            ->setData($dados)
+            ->setMessageSuccess('Dados do usuário listado com sucesso!')
+            ->setMessageError('Falha ao listar dados do usuário!');
+    }
 }

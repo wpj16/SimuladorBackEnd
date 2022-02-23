@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Http\Controllers\Api\Simulacao;
+namespace App\Http\Controllers\Api\Pessoa;
 
 use App\Http\Controllers\Controller;
 use App\Http\Business\Api\Pessoa\PessoaBusinessRule;

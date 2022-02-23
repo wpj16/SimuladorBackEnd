@@ -31,6 +31,82 @@ class SorteioBusinessRule extends MainBusinessRule
         $this->modelCampeonatoTime = new CampeonatoTime();
     }
 
+    public function listarSimulacoesCampeonatos(int|null $campeonato = null, int|null $etapa = null): ResponseBusinessRule
+    {
+        $tabelaSorteio = $this->modelSorteio->getTable();
+        $tabelaCampeonato = $this->modelCampeonato->getTable();
+        $tabelaCampeonatoTime = $this->modelCampeonatoTime->getTable();
+        $campeonatos =  $this->modelCampeonato
+            ->with([
+                'sorteios.timeA',
+                'sorteios.timeB',
+                'sorteios' => function ($query) use ($tabelaSorteio, $tabelaCampeonatoTime, $etapa) {
+                    $query->select('*')
+                        ->addSelect(['pontos_time_a' => function ($query) use ($tabelaSorteio) {
+                            return $query
+                                ->selectRaw('(sum(gols_time_a) * c.pontos_por_gol)')
+                                ->from("$tabelaSorteio as ss")
+                                ->whereRaw("ss.id_time_a = $tabelaSorteio.id_time_a")
+                                ->whereRaw("ss.id_campeonato = $tabelaSorteio.id_campeonato");
+                        }])
+                        ->addSelect(['pontos_time_b' => function ($query) use ($tabelaSorteio) {
+                            return $query
+                                ->selectRaw('(sum(gols_time_b) * c.pontos_por_gol)')
+                                ->from("$tabelaSorteio as ss")
+                                ->whereRaw("ss.id_time_b = $tabelaSorteio.id_time_b")
+                                ->whereRaw("ss.id_campeonato = $tabelaSorteio.id_campeonato");
+                        }])
+                        ->addSelect(['id_time_desempate_data' => function ($query) use ($tabelaCampeonatoTime, $tabelaSorteio) {
+                            return $query
+                                ->select('id_time')
+                                ->from("$tabelaCampeonatoTime as cc")
+                                ->whereRaw("cc.id_time in($tabelaSorteio.id_time_a, $tabelaSorteio.id_time_b)")
+                                ->orderBy('data_criacao', 'asc')
+                                ->limit(1);
+                        }])
+                        ->join('campeonato.campeonatos as c', 'c.id', '=', "$tabelaSorteio.id_campeonato")
+                        ->whereRaw("$tabelaSorteio.etapa = coalesce( ? , $tabelaSorteio.etapa)", [$etapa]);
+                }
+            ])
+            ->whereRaw("$tabelaCampeonato.id = coalesce( ? , $tabelaCampeonato.id)", [$campeonato])
+            ->columnsOrderByWith('sorteios:etapa', 'asc')
+            ->get()->toArray();
+
+        array_walk($campeonatos, function (&$jogos) {
+            $jogos['sorteios'] = $jogos['sorteios'] ?? [];
+            array_walk($jogos['sorteios'], function (&$value) {
+                switch (true) {
+                    case ($value['gols_time_a'] > $value['gols_time_b']):
+                        $value['time_ganhador'] = $value['id_time_a'];
+                        $value['time_perdedor'] = $value['id_time_b'];
+                        break;
+                    case ($value['gols_time_a'] < $value['gols_time_b']):
+                        $value['time_ganhador'] = $value['id_time_b'];
+                        $value['time_perdedor'] = $value['id_time_a'];
+                        break;
+                    case ($value['pontos_time_a'] > $value['pontos_time_b']):
+                        $value['time_ganhador'] = $value['id_time_a'];
+                        $value['time_perdedor'] = $value['id_time_b'];
+
+                        break;
+                    case ($value['pontos_time_a'] < $value['pontos_time_b']):
+                        $value['time_ganhador'] = $value['id_time_b'];
+                        $value['time_perdedor'] = $value['id_time_a'];
+                        break;
+                    case ($value['gols_time_a'] == $value['gols_time_b']) && ($value['pontos_time_a'] == $value['pontos_time_b']):
+                        $value['time_ganhador'] = $value['id_time_desempate_data'];
+                        $value['time_perdedor'] = ($value['id_time_desempate_data'] == $value['id_time_a']) ? $value['id_time_b'] : $value['id_time_a'];
+                        break;
+                }
+            });
+        });
+
+        return parent::response()
+            ->setData($campeonatos)
+            ->setMessageSuccess('Campeonatos listados com sucesso!')
+            ->setMessageError('Falha ao listar jogadas dos campeonatos!');
+    }
+
     public function validarCampeonatoSimulado(int $idCampeonato): ResponseBusinessRule
     {
         $quartasDeFinais = $this->modelSorteio->where([
@@ -90,7 +166,7 @@ class SorteioBusinessRule extends MainBusinessRule
 
     public function simular(int $idCampeonato, int $etapa): ResponseBusinessRule
     {
-        $jogos = $this->listarJogosCadastrados($idCampeonato, $etapa);
+        $jogos = $this->listarSimulacoesCampeonatos($idCampeonato, $etapa);
         $jogos->error(function () use ($idCampeonato, $etapa) {
             if ($etapa <> self::JOGO_QUARTAS_DE_FINAIS) {
                 return parent::response()
@@ -124,8 +200,9 @@ class SorteioBusinessRule extends MainBusinessRule
                     return $this->simular($campeonato['id'], $etapa);
                 });
         })->success(function ($response) use ($idCampeonato, $etapa) {
-
-            $jogos = $response->getData();
+            $campeonatos = $response->getData();
+            $campeonato = array_shift($campeonatos);
+            $jogos = $campeonato['sorteios'] ?? [];
             if ($etapa <= self::JOGO_FINAIS) {
                 $this->simularTerceiroLugar($idCampeonato, self::JOGO_SEMI_FINAIS);
                 return parent::response()
@@ -169,78 +246,13 @@ class SorteioBusinessRule extends MainBusinessRule
         return $jogos;
     }
 
-
-    public function listarJogosCadastrados(int $campeonato, int|null $etapa = null): ResponseBusinessRule
-    {
-
-        $tabelaSorteio = $this->modelSorteio->getTable();
-        $tabelaCampeonatoTime = $this->modelCampeonatoTime->getTable();
-        $dados = $this->modelSorteio
-            ->select('*')
-            ->addSelect(['pontos_time_a' => function ($query) use ($tabelaSorteio) {
-                return $query
-                    ->selectRaw('(sum(gols_time_a) * c.pontos_por_gol)')
-                    ->from("$tabelaSorteio as ss")
-                    ->whereRaw("ss.id_time_a = $tabelaSorteio.id_time_a")
-                    ->whereRaw("ss.id_campeonato = $tabelaSorteio.id_campeonato");
-            }])
-            ->addSelect(['pontos_time_b' => function ($query) use ($tabelaSorteio) {
-                return $query
-                    ->selectRaw('(sum(gols_time_b) * c.pontos_por_gol)')
-                    ->from("$tabelaSorteio as ss")
-                    ->whereRaw("ss.id_time_b = $tabelaSorteio.id_time_b")
-                    ->whereRaw("ss.id_campeonato = $tabelaSorteio.id_campeonato");
-            }])
-            ->addSelect(['id_time_desempate_data' => function ($query) use ($tabelaCampeonatoTime, $tabelaSorteio) {
-                return $query
-                    ->select('id_time')
-                    ->from("$tabelaCampeonatoTime as cc")
-                    ->whereRaw("cc.id_time in($tabelaSorteio.id_time_a, $tabelaSorteio.id_time_b)")
-                    ->orderBy('data_criacao', 'asc')
-                    ->limit(1);
-            }])
-            ->join('campeonato.campeonatos as c', 'c.id', '=', "$tabelaSorteio.id_campeonato")
-            ->where('id_campeonato', $campeonato)
-            ->whereRaw("$tabelaSorteio.etapa = coalesce( ? , $tabelaSorteio.etapa)", [$etapa])
-            ->get()->toArray();
-
-        array_walk($dados, function (&$value) {
-            switch (true) {
-                case ($value['gols_time_a'] > $value['gols_time_b']):
-                    $value['time_ganhador'] = $value['id_time_a'];
-                    $value['time_perdedor'] = $value['id_time_b'];
-                    break;
-                case ($value['gols_time_a'] < $value['gols_time_b']):
-                    $value['time_ganhador'] = $value['id_time_b'];
-                    $value['time_perdedor'] = $value['id_time_a'];
-                    break;
-                case ($value['pontos_time_a'] > $value['pontos_time_b']):
-                    $value['time_ganhador'] = $value['id_time_a'];
-                    $value['time_perdedor'] = $value['id_time_b'];
-
-                    break;
-                case ($value['pontos_time_a'] < $value['pontos_time_b']):
-                    $value['time_ganhador'] = $value['id_time_b'];
-                    $value['time_perdedor'] = $value['id_time_a'];
-                    break;
-                case ($value['gols_time_a'] == $value['gols_time_b']) && ($value['pontos_time_a'] == $value['pontos_time_b']):
-                    $value['time_ganhador'] = $value['id_time_desempate_data'];
-                    $value['time_perdedor'] = ($value['id_time_desempate_data'] == $value['id_time_a']) ? $value['id_time_b'] : $value['id_time_a'];
-                    break;
-            }
-        });
-
-        return parent::response()
-            ->setData($dados)
-            ->setMessageSuccess('Partida(s) listada(s) com sucesso!')
-            ->setMessageError('Nenhuma partida encontrada!');
-    }
-
     private function simularTerceiroLugar(int $idCampeonato, int $etapa): ResponseBusinessRule
     {
-        $jogos = $this->listarJogosCadastrados($idCampeonato, $etapa);
+        $jogos = $this->listarSimulacoesCampeonatos($idCampeonato, $etapa);
         $jogos->success(function ($response) use ($idCampeonato) {
-            $jogos = $response->getData();
+            $campeonatos = $response->getData();
+            $campeonato = array_shift($campeonatos);
+            $jogos = $campeonato['sorteios'] ?? [];
             $campeonato = $this->modelCampeonato
                 ->with(['times' => function ($query) use ($jogos) {
                     $perdedores = array_column($jogos, 'time_perdedor');

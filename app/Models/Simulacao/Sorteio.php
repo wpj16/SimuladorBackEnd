@@ -22,7 +22,7 @@ class Sorteio extends Model
 
     public function campeonato()
     {
-        return $this->hasOne(Campeonato::class, 'id', 'id_campeonato');
+        return $this->belongsTo(Campeonato::class, 'id', 'id_campeonato');
     }
 
     public function timeA()

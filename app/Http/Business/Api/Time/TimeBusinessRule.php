@@ -18,4 +18,25 @@ class TimeBusinessRule extends MainBusinessRule
     {
         $this->modelTime = new Time();
     }
+
+    public function cadastrarTime(string $time): ResponseBusinessRule
+    {
+        $id = $this->modelTime->insertGetId([
+            'nome' => $time
+        ]);
+        $dados = $this->modelTime->find($id)->toArray();
+        return parent::response()
+            ->setData($dados)
+            ->setMessageSuccess('Time cadastrado com com sucesso!')
+            ->setMessageError('Falha ao cadastrar time!');
+    }
+
+    public function listarTimes(): ResponseBusinessRule
+    {
+        $dados =  $this->modelTime->get()->toArray();
+        return parent::response()
+            ->setData($dados)
+            ->setMessageSuccess('Times listados com com sucesso!')
+            ->setMessageError('Nenhum time encontrado!');
+    }
 }

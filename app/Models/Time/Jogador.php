@@ -24,6 +24,6 @@ class Jogador extends Model
 
     public function times()
     {
-        return $this->belongsToMany(Time::class, 'times_jogadores');
+        return $this->belongsToMany(Time::class, 'time.times_jogadores',  'id_jogador', 'id_time');
     }
 }

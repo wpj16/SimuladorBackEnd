@@ -18,6 +18,7 @@ class UsuarioController extends Controller
 
     public function login(Request $request, AuthorizationServer $server)
     {
+
         parent::validate($request)
             ->rules([
                 'username' => 'required|email',
@@ -49,5 +50,23 @@ class UsuarioController extends Controller
                     ->send();
             })
             ->validate();
+    }
+
+    public function listarMeusDados(Request $request)
+    {
+        $id = $request->user()->id;
+        $this->usuarioBusinessRule->listarDadosUsuario($id)
+            ->success(function ($response) {
+                return parent::responseJson($response->getData())
+                    ->code(200)
+                    ->message($response->getMessage())
+                    ->send();
+            })
+            ->error(function ($response) {
+                return parent::responseJson()
+                    ->code(204)
+                    ->message($response->getMessage())
+                    ->send();
+            });
     }
 }

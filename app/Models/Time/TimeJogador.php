@@ -11,7 +11,7 @@ use App\Models\Time\{
 
 class TimeJogador extends Model
 {
-    protected $table = 'time.time_jogadores';
+    protected $table = 'time.times_jogadores';
 
     protected $fillable = [
         'id_time',
