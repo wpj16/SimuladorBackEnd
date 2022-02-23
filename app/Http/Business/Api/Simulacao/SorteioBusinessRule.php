@@ -104,7 +104,7 @@ class SorteioBusinessRule extends MainBusinessRule
         return parent::response()
             ->setData($campeonatos)
             ->setMessageSuccess('Campeonatos listados com sucesso!')
-            ->setMessageError('Falha ao listar jogadas dos campeonatos!');
+            ->setMessageError('Nenhum campeonato encontrado!');
     }
 
     public function validarCampeonatoSimulado(int $idCampeonato): ResponseBusinessRule
@@ -166,70 +166,39 @@ class SorteioBusinessRule extends MainBusinessRule
 
     public function simular(int $idCampeonato, int $etapa): ResponseBusinessRule
     {
-        $jogos = $this->listarSimulacoesCampeonatos($idCampeonato, $etapa);
-        $jogos->error(function () use ($idCampeonato, $etapa) {
-            if ($etapa <> self::JOGO_QUARTAS_DE_FINAIS) {
-                return parent::response()
-                    ->setError(true)
-                    ->setMessageError('Nenhum jogo encontroado para esta etapa!');
-            }
-            $campeonato = $this->modelCampeonato
-                ->with('times')
-                ->where('id', $idCampeonato)
-                ->first()
-                ->toArray();
-            return $this->sorteio($campeonato['times'])
-                ->success(function ($response) use ($campeonato, $etapa) {
-                    $etapa = $etapa--;
-                    $sorteio = $response->getData();
-                    $sorteiosIds = [];
-                    foreach ($sorteio as $jogo) {
-                        $this->resultado($jogo)
-                            ->success(function ($response) use ($campeonato, $etapa, &$sorteiosIds) {
-                                $jogo = $response->getData();
-                                $sorteiosIds[] = $this->modelSorteio->insertGetId([
-                                    'id_campeonato' => $campeonato['id'],
-                                    'id_time_a' =>  $jogo[0]['id'],
-                                    'id_time_b' =>  $jogo[1]['id'],
-                                    'gols_time_a' =>  $jogo[0]['gols'],
-                                    'gols_time_b' =>  $jogo[1]['gols'],
-                                    'etapa' => $etapa
-                                ]);
-                            });
-                    }
-                    return $this->simular($campeonato['id'], $etapa);
-                });
-        })->success(function ($response) use ($idCampeonato, $etapa) {
+        $simulacao = function ($response) use ($idCampeonato, $etapa) {
             $campeonatos = $response->getData();
             $campeonato = array_shift($campeonatos);
-            $jogos = $campeonato['sorteios'] ?? [];
-            if ($etapa <= self::JOGO_FINAIS) {
-                $this->simularTerceiroLugar($idCampeonato, self::JOGO_SEMI_FINAIS);
-                return parent::response()
-                    ->setData($jogos)
-                    ->setMessageSuccess('Partidas simuladas com sucesso!')
-                    ->setMessageError('Nenhuma partida encontrada para esta etapa!');
-            }
-
+            $ganhadores = array_column($campeonato['sorteios'] ?? [], 'time_ganhador');
             $campeonato = $this->modelCampeonato
-                ->with(['times' => function ($query) use ($jogos) {
-                    $ganhadores = array_column($jogos, 'time_ganhador');
-                    return $query->whereIn("times.id", $ganhadores);
+                ->with(['times' => function ($query) use ($ganhadores) {
+                    return count($ganhadores) ? $query->whereIn("times.id", $ganhadores) : $query;
                 }])
-                ->where('id', $idCampeonato)
-                ->first()
-                ->toArray();
+                ->where('id', $idCampeonato)->first()->toArray();
+
+            if ($etapa < self::JOGO_FINAIS) {
+                //terceiro lugar
+                $this->listarSimulacoesCampeonatos($idCampeonato, self::JOGO_SEMI_FINAIS)
+                    ->success(function ($response) use ($idCampeonato, &$campeonato) {
+                        $campeonatos = $response->getData();
+                        $campeonato = array_shift($campeonatos);
+                        $perdedores = array_column($campeonato['sorteios'] ?? [], 'time_perdedor');
+                        $campeonato = $this->modelCampeonato
+                            ->with(['times' => function ($query) use ($perdedores) {
+                                return count($perdedores) ? $query->whereIn("times.id", $perdedores) : $query;
+                            }])
+                            ->where('id', $idCampeonato)->first()->toArray();
+                    });
+            }
 
             return $this->sorteio($campeonato['times'])
                 ->success(function ($response) use ($campeonato, $etapa) {
-                    $etapa = $etapa - 1;
                     $sorteio = $response->getData();
-                    $sorteiosIds = [];
                     foreach ($sorteio as $jogo) {
                         $this->resultado($jogo)
-                            ->success(function ($response) use ($campeonato, $etapa, &$sorteiosIds) {
+                            ->success(function ($response) use ($campeonato, $etapa) {
                                 $jogo = $response->getData();
-                                $sorteiosIds[] = $this->modelSorteio->insertGetId([
+                                $this->modelSorteio->insertGetId([
                                     'id_campeonato' => $campeonato['id'],
                                     'id_time_a' =>  $jogo[0]['id'],
                                     'id_time_b' =>  $jogo[1]['id'],
@@ -239,12 +208,17 @@ class SorteioBusinessRule extends MainBusinessRule
                                 ]);
                             });
                     }
-                    return $this->simular($campeonato['id'], $etapa);
+                    $etapa = $etapa - 1;
+                    return ($etapa >= self::JOGO_TERCEIRO_LUGAR) ? $this->simular($campeonato['id'], $etapa) : $this;
                 });
-        });
+        };
 
+        $jogos = $this->listarSimulacoesCampeonatos($idCampeonato, $etapa + 1);
+        $jogos->success($simulacao);
+        $jogos->error($simulacao);
         return $jogos;
     }
+
 
     private function simularTerceiroLugar(int $idCampeonato, int $etapa): ResponseBusinessRule
     {

@@ -1,0 +1,596 @@
+{
+	"info": {
+		"_postman_id": "29f8650c-22bc-4f71-8327-3139bcd65e55",
+		"name": "TradeTechnology",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Login",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"content-type": true
+				}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"username\" : \"josegustavo@tradetechnology.com.br\",\r\n    \"password\": \"tradetechnology\",\r\n    \"scope\" : null,\r\n    \"grant_type\" : \"password\",\r\n    \"client_id\" : \"{{password-client-id}}\",\r\n    \"client_secret\": \"{{password-secret-token}}\"\r\n}"
+				},
+				"url": {
+					"raw": "{{endpoint}}/login",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Meus Dados",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Client-Ip",
+						"value": "127.0.0.1",
+						"type": "text"
+					},
+					{
+						"key": "Client-Localization",
+						"value": "{\"latitude\":1.1,\"longitude\":1.1}",
+						"type": "text"
+					},
+					{
+						"key": "Search",
+						"value": "123",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n}"
+				},
+				"url": {
+					"raw": "{{endpoint}}/minha-conta/meus-dados",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"minha-conta",
+						"meus-dados"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listar Times",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Client-Ip",
+						"value": "127.0.0.1",
+						"type": "text"
+					},
+					{
+						"key": "Client-Localization",
+						"value": "{\"latitude\":1.1,\"longitude\":1.1}",
+						"type": "text"
+					},
+					{
+						"key": "Search",
+						"value": "123",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n}"
+				},
+				"url": {
+					"raw": "{{endpoint}}/minha-conta/listar/times/",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"minha-conta",
+						"listar",
+						"times",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listar Jogadores",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Client-Ip",
+						"value": "127.0.0.1",
+						"type": "text"
+					},
+					{
+						"key": "Client-Localization",
+						"value": "{\"latitude\":1.1,\"longitude\":1.1}",
+						"type": "text"
+					},
+					{
+						"key": "Search",
+						"value": "123",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n}"
+				},
+				"url": {
+					"raw": "{{endpoint}}/minha-conta/listar/jogadores/",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"minha-conta",
+						"listar",
+						"jogadores",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listar Campeonatos",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Client-Ip",
+						"value": "127.0.0.1",
+						"type": "text"
+					},
+					{
+						"key": "Client-Localization",
+						"value": "{\"latitude\":1.1,\"longitude\":1.1}",
+						"type": "text"
+					},
+					{
+						"key": "Search",
+						"value": "123",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n}"
+				},
+				"url": {
+					"raw": "{{endpoint}}/minha-conta/meus-dados",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"minha-conta",
+						"meus-dados"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Meus Campeonatos",
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Client-Ip",
+						"value": "127.0.0.1",
+						"type": "text"
+					},
+					{
+						"key": "Client-Localization",
+						"value": "{\"latitude\":1.1,\"longitude\":1.1}",
+						"type": "text"
+					},
+					{
+						"key": "Search",
+						"value": "123",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{endpoint}}/minha-conta/meus-campeonatos/",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"minha-conta",
+						"meus-campeonatos",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Simular Campeonato",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Client-Ip",
+						"value": "127.0.0.1",
+						"type": "text"
+					},
+					{
+						"key": "Client-Localization",
+						"value": "{\"latitude\":1.1,\"longitude\":1.1}",
+						"type": "text"
+					},
+					{
+						"key": "Search",
+						"value": "123",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"campeonato\": 1\r\n}"
+				},
+				"url": {
+					"raw": "{{endpoint}}/minha-conta/simular/campeonato/",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"minha-conta",
+						"simular",
+						"campeonato",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cadastrar Time",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Client-Ip",
+						"value": "127.0.0.1",
+						"type": "text"
+					},
+					{
+						"key": "Client-Localization",
+						"value": "{\"latitude\":1.1,\"longitude\":1.1}",
+						"type": "text"
+					},
+					{
+						"key": "Search",
+						"value": "123",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"campeonato\":\"1\"\r\n}"
+				},
+				"url": {
+					"raw": "{{endpoint}}/minha-conta/cadastrar/time/",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"minha-conta",
+						"cadastrar",
+						"time",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cadastrar Jogador",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Client-Ip",
+						"value": "127.0.0.1",
+						"type": "text"
+					},
+					{
+						"key": "Client-Localization",
+						"value": "{\"latitude\":1.1,\"longitude\":1.1}",
+						"type": "text"
+					},
+					{
+						"key": "Search",
+						"value": "123",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"time\":\"1\",\r\n    \"nome\":\"Jogador Walter\",\r\n    \"email\":\"wpj16@outlook.com\",\r\n    \"documento\":\"09802733903\",\r\n    \"data_nascimento\":\"17/06/1994\",\r\n    \"numero_camisa\":\"01\"\r\n}"
+				},
+				"url": {
+					"raw": "{{endpoint}}/minha-conta/cadastrar/jogador/",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"minha-conta",
+						"cadastrar",
+						"jogador",
+						""
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cadastrar Campeonato",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{bearer-token}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Client-Ip",
+						"value": "127.0.0.1",
+						"type": "text"
+					},
+					{
+						"key": "Client-Localization",
+						"value": "{\"latitude\":1.1,\"longitude\":1.1}",
+						"type": "text"
+					},
+					{
+						"key": "Search",
+						"value": "123",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"campeonato\":\"1\"\r\n}"
+				},
+				"url": {
+					"raw": "{{endpoint}}/minha-conta/cadastrar/jogador/",
+					"host": [
+						"{{endpoint}}"
+					],
+					"path": [
+						"minha-conta",
+						"cadastrar",
+						"jogador",
+						""
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
